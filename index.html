@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cleaning Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0f5f5c;
+    --teal-soft: #e3efee;
+    --plum: #6d3b5e;
+    --plum-soft: #f0e6ed;
+    --amber: #e0973a;
+    --amber-soft: #faeeda;
+    --ink: #2b2b33;
+    --ink-soft: #6f6f7a;
+    --bg: #faf7f2;
+    --card: #ffffff;
+    --line: #e8e2d8;
+    --done: #9aa39b;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 20px 14px 48px;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  header { margin-bottom: 18px; }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.7rem;
+    color: var(--teal);
+    letter-spacing: -0.01em;
+  }
+  .sub { color: var(--ink-soft); font-size: 0.85rem; margin-top: 2px; }
+  .header-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .edit-toggle {
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--plum);
+    background: var(--plum-soft);
+    border: none;
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .edit-toggle.active { background: var(--plum); color: #fff; }
+
+  /* ---------- Room tabs ---------- */
+  .room-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 14px;
+  }
+  .room-tab {
+    flex: 1;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 10px 6px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--ink-soft);
+    cursor: pointer;
+    text-align: center;
+    transition: all .15s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .room-tab.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #fff;
+  }
+  .room-tab:focus-visible, .edit-toggle:focus-visible, .freq-tab:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+  }
+  .room-edit {
+    flex: 1 1 140px;
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 0;
+  }
+  .room-name-input {
+    flex: 1;
+    min-width: 0;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-align: center;
+    border: 1.5px dashed var(--plum);
+    border-radius: var(--radius);
+    padding: 10px 6px;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .room-name-input:focus { outline: none; border-style: solid; }
+  .room-del {
+    background: var(--plum-soft);
+    border: none;
+    border-radius: var(--radius);
+    color: var(--plum);
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 0 11px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .room-del:hover { background: var(--plum); color: #fff; }
+  .add-room {
+    flex: 0 0 auto;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    background: var(--teal-soft);
+    border: 1.5px dashed var(--teal);
+    border-radius: var(--radius);
+    color: var(--teal);
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+  .add-room:hover { background: var(--teal); color: #fff; border-style: solid; }
+
+  /* ---------- Frequency tabs ---------- */
+  .freq-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .freq-tab {
+    flex: 1;
+    border: none;
+    border-radius: 999px;
+    padding: 8px 4px;
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    background: var(--card);
+    color: var(--ink-soft);
+    border: 1.5px solid var(--line);
+    transition: all .15s ease;
+  }
+  .freq-tab .count { font-weight: 600; opacity: .75; font-size: 0.72rem; }
+  .freq-tab.active[data-freq="daily"]   { background: var(--amber-soft); border-color: var(--amber); color: #8a5a17; }
+  .freq-tab.active[data-freq="weekly"]  { background: var(--teal-soft); border-color: var(--teal); color: var(--teal); }
+  .freq-tab.active[data-freq="monthly"] { background: var(--plum-soft); border-color: var(--plum); color: var(--plum); }
+
+  /* ---------- Progress ---------- */
+  .progress-card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .progress-label {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .progress-num { font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); }
+  .bar {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    transition: width .3s ease;
+  }
+  .bar-fill.daily   { background: var(--amber); }
+  .bar-fill.weekly  { background: var(--teal); }
+  .bar-fill.monthly { background: var(--plum); }
+  .reset-note { font-size: 0.72rem; color: var(--ink-soft); margin-top: 8px; }
+
+  /* ---------- Tasks ---------- */
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+  .task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .task:hover { border-color: var(--teal); }
+  .task.checked { opacity: .55; }
+  .task.checked .task-name { text-decoration: line-through; color: var(--done); }
+  .checkbox {
+    width: 22px; height: 22px;
+    border-radius: 7px;
+    border: 2px solid var(--line);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+  }
+  .task.checked .checkbox { border-color: var(--teal); background: var(--teal); }
+  .checkbox svg { width: 13px; height: 13px; stroke: #fff; stroke-width: 3.2; fill: none; opacity: 0; }
+  .task.checked .checkbox svg { opacity: 1; }
+  .task-name { font-size: 0.92rem; font-weight: 600; flex: 1; }
+  .del-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--plum);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 8px;
+    line-height: 1;
+    border-radius: 6px;
+  }
+  .del-btn:hover { background: var(--plum-soft); }
+  body.editing .del-btn { display: block; }
+
+  /* ---------- Add task ---------- */
+  .add-row {
+    display: none;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  body.editing .add-row { display: flex; }
+  .add-row input {
+    flex: 1;
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 11px 14px;
+    border: 1.5px dashed var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--ink);
+  }
+  .add-row input:focus { outline: none; border-color: var(--teal); border-style: solid; }
+  .add-row button {
+    font-family: 'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 0.85rem;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0 18px;
+    cursor: pointer;
+  }
+  .empty {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    padding: 26px 10px;
+    background: var(--card);
+    border: 1.5px dashed var(--line);
+    border-radius: var(--radius);
+  }
+  .all-done {
+    text-align: center;
+    padding: 10px 0 2px;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    color: var(--teal);
+    font-size: 0.95rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="header-row">
+      <div>
+        <h1>Cleaning Tracker</h1>
+        <div class="sub" id="dateLabel"></div>
+      </div>
+      <button class="edit-toggle" id="editToggle">Edit lists</button>
+    </div>
+  </header>
+
+  <div class="room-tabs" id="roomTabs"></div>
+  <div class="freq-tabs" id="freqTabs"></div>
+
+  <div class="progress-card">
+    <div class="progress-top">
+      <span class="progress-label" id="progressLabel"></span>
+      <span class="progress-num" id="progressNum"></span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    <div class="reset-note" id="resetNote"></div>
+  </div>
+
+  <div class="task-list" id="taskList"></div>
+  <div class="add-row">
+    <input type="text" id="newTaskInput" placeholder="Add a task…" maxlength="80">
+    <button id="addTaskBtn">Add</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+// Day rolls over at 10 AM instead of midnight, so anything you
+// check off after a night shift still counts toward the same
+// "day." Change to 0 for a normal midnight rollover.
+const DAY_ROLLOVER_HOUR = 10;
+const STORAGE_KEY = 'cleaningTracker.v1';
+
+const DEFAULT_DATA = {
+  rooms: [
+    {
+      name: 'Kitchen',
+      tasks: {
+        daily:   [t('Wipe counters'), t('Dishes / load dishwasher'), t('Wipe stovetop')],
+        weekly:  [t('Mop floor'), t('Clean microwave'), t('Wipe cabinet fronts'), t('Take out fridge leftovers')],
+        monthly: [t('Deep clean fridge'), t('Clean oven'), t('Wipe baseboards'), t('Descale coffee maker')]
+      }
+    },
+    {
+      name: 'Bathroom',
+      tasks: {
+        daily:   [t('Wipe sink & counter'), t('Squeegee / wipe shower')],
+        weekly:  [t('Scrub toilet'), t('Clean mirror'), t('Mop floor'), t('Swap towels')],
+        monthly: [t('Deep scrub shower & grout'), t('Wash bath mat'), t('Clear drain'), t('Restock supplies')]
+      }
+    },
+    {
+      name: 'Living Room',
+      tasks: {
+        daily:   [t('Quick tidy / reset surfaces'), t('Fluff pillows & fold blankets')],
+        weekly:  [t('Vacuum (Bia fur patrol)'), t('Dust surfaces'), t('Wipe remotes & handles')],
+        monthly: [t('Vacuum under furniture'), t('Wash throw blankets'), t('Clean windows'), t('Dust vents & fans')]
+      }
+    }
+  ]
+};
+
+function t(name) {
+  return { id: 'id' + Math.random().toString(36).slice(2, 10), name: name, doneKey: null };
+}
+
+// ============================================================
+// PERIOD KEYS (auto-reset logic)
+// ============================================================
+function shiftedNow() {
+  const d = new Date();
+  d.setHours(d.getHours() - DAY_ROLLOVER_HOUR);
+  return d;
+}
+function dayKey() {
+  const d = shiftedNow();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function weekKey() {
+  // Week starts Monday
+  const d = shiftedNow();
+  const day = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
+  d.setDate(d.getDate() - day);
+  return 'W' + d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+function monthKey() {
+  const d = shiftedNow();
+  return 'M' + d.getFullYear() + '-' + (d.getMonth() + 1);
+}
+function currentKey(freq) {
+  if (freq === 'daily') return dayKey();
+  if (freq === 'weekly') return weekKey();
+  return monthKey();
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let data;
+try {
+  data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
+} catch (e) { data = null; }
+if (!data || !data.rooms) data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+let activeRoom = 0;
+let activeFreq = 'daily';
+let editing = false;
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+const roomTabsEl = document.getElementById('roomTabs');
+const freqTabsEl = document.getElementById('freqTabs');
+const taskListEl = document.getElementById('taskList');
+const barFillEl = document.getElementById('barFill');
+const progressLabelEl = document.getElementById('progressLabel');
+const progressNumEl = document.getElementById('progressNum');
+const resetNoteEl = document.getElementById('resetNote');
+const dateLabelEl = document.getElementById('dateLabel');
+const editToggleEl = document.getElementById('editToggle');
+const newTaskInput = document.getElementById('newTaskInput');
+
+const FREQS = ['daily', 'weekly', 'monthly'];
+const FREQ_LABELS = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+const RESET_NOTES = {
+  daily: 'Resets each day at ' + (DAY_ROLLOVER_HOUR === 0 ? 'midnight' : DAY_ROLLOVER_HOUR + ':00 AM') + ' — night-shift friendly.',
+  weekly: 'Resets every Monday.',
+  monthly: 'Resets on the 1st of each month.'
+};
+
+function isDone(task, freq) {
+  return task.doneKey === currentKey(freq);
+}
+
+function counts(room, freq) {
+  const tasks = room.tasks[freq];
+  const done = tasks.filter(x => isDone(x, freq)).length;
+  return { done, total: tasks.length };
+}
+
+function newRoom(name) {
+  return { name: name, tasks: { daily: [], weekly: [], monthly: [] } };
+}
+
+function renderRoomTabs() {
+  roomTabsEl.innerHTML = '';
+  data.rooms.forEach((room, i) => {
+    if (editing) {
+      const wrap = document.createElement('div');
+      wrap.className = 'room-edit';
+
+      const input = document.createElement('input');
+      input.className = 'room-name-input';
+      input.value = room.name;
+      input.maxLength = 24;
+      input.placeholder = 'Room name';
+      input.addEventListener('input', () => { room.name = input.value; save(); });
+
+      const del = document.createElement('button');
+      del.className = 'room-del';
+      del.textContent = '×';
+      del.setAttribute('aria-label', 'Delete ' + (room.name || 'room'));
+      del.addEventListener('click', () => {
+        const total = room.tasks.daily.length + room.tasks.weekly.length + room.tasks.monthly.length;
+        const label = room.name || 'this room';
+        if (total > 0 && !confirm('Delete "' + label + '" and its ' + total + ' task' + (total === 1 ? '' : 's') + '?')) return;
+        data.rooms.splice(i, 1);
+        if (data.rooms.length === 0) data.rooms.push(newRoom('New room'));
+        if (activeRoom >= data.rooms.length) activeRoom = data.rooms.length - 1;
+        save();
+        render();
+      });
+
+      wrap.appendChild(input);
+      wrap.appendChild(del);
+      roomTabsEl.appendChild(wrap);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'room-tab' + (i === activeRoom ? ' active' : '');
+      btn.textContent = room.name || 'Room ' + (i + 1);
+      btn.addEventListener('click', () => { activeRoom = i; render(); });
+      roomTabsEl.appendChild(btn);
+    }
+  });
+
+  if (editing) {
+    const add = document.createElement('button');
+    add.className = 'add-room';
+    add.textContent = '+ Room';
+    add.addEventListener('click', () => {
+      data.rooms.push(newRoom(''));
+      activeRoom = data.rooms.length - 1;
+      save();
+      render();
+      const inputs = roomTabsEl.querySelectorAll('.room-name-input');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+    roomTabsEl.appendChild(add);
+  }
+}
+
+function renderFreqTabs() {
+  freqTabsEl.innerHTML = '';
+  const room = data.rooms[activeRoom];
+  FREQS.forEach(freq => {
+    const c = counts(room, freq);
+    const btn = document.createElement('button');
+    btn.className = 'freq-tab' + (freq === activeFreq ? ' active' : '');
+    btn.dataset.freq = freq;
+    btn.innerHTML = FREQ_LABELS[freq] + ' <span class="count">' + c.done + '/' + c.total + '</span>';
+    btn.addEventListener('click', () => { activeFreq = freq; render(); });
+    freqTabsEl.appendChild(btn);
+  });
+}
+
+function renderTasks() {
+  const room = data.rooms[activeRoom];
+  const tasks = room.tasks[activeFreq];
+  taskListEl.innerHTML = '';
+
+  if (tasks.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = editing ? 'Add your first task below.' : 'No tasks here yet — tap "Edit lists" to add some.';
+    taskListEl.appendChild(empty);
+  }
+
+  tasks.forEach(task => {
+    const row = document.createElement('div');
+    row.className = 'task' + (isDone(task, activeFreq) ? ' checked' : '');
+    row.setAttribute('role', 'checkbox');
+    row.setAttribute('aria-checked', isDone(task, activeFreq));
+    row.tabIndex = 0;
+
+    const box = document.createElement('div');
+    box.className = 'checkbox';
+    box.innerHTML = '<svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>';
+
+    const name = document.createElement('span');
+    name.className = 'task-name';
+    name.textContent = task.name;
+
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.textContent = '×';
+    del.setAttribute('aria-label', 'Delete task');
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const list = room.tasks[activeFreq];
+      const idx = list.indexOf(task);
+      if (idx > -1) list.splice(idx, 1);
+      save();
+      render();
+    });
+
+    function toggle() {
+      if (editing) return;
+      task.doneKey = isDone(task, activeFreq) ? null : currentKey(activeFreq);
+      save();
+      render();
+    }
+    row.addEventListener('click', toggle);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); }
+    });
+
+    row.appendChild(box);
+    row.appendChild(name);
+    row.appendChild(del);
+    taskListEl.appendChild(row);
+  });
+
+  const c = counts(room, activeFreq);
+  if (c.total > 0 && c.done === c.total && !editing) {
+    const done = document.createElement('div');
+    done.className = 'all-done';
+    done.textContent = '✦ ' + (room.name || 'This room') + ' is done for the ' +
+      (activeFreq === 'daily' ? 'day' : activeFreq === 'weekly' ? 'week' : 'month') + ' ✦';
+    taskListEl.appendChild(done);
+  }
+}
+
+function renderProgress() {
+  const room = data.rooms[activeRoom];
+  const c = counts(room, activeFreq);
+  const pct = c.total === 0 ? 0 : Math.round((c.done / c.total) * 100);
+  progressLabelEl.textContent = (room.name || 'Room') + ' · ' + FREQ_LABELS[activeFreq];
+  progressNumEl.textContent = c.done + ' of ' + c.total;
+  barFillEl.className = 'bar-fill ' + activeFreq;
+  barFillEl.style.width = pct + '%';
+  resetNoteEl.textContent = RESET_NOTES[activeFreq];
+}
+
+function render() {
+  document.body.classList.toggle('editing', editing);
+  editToggleEl.textContent = editing ? 'Done editing' : 'Edit lists';
+  editToggleEl.classList.toggle('active', editing);
+  renderRoomTabs();
+  renderFreqTabs();
+  renderTasks();
+  renderProgress();
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+editToggleEl.addEventListener('click', () => { editing = !editing; render(); });
+
+function addTask() {
+  const name = newTaskInput.value.trim();
+  if (!name) return;
+  data.rooms[activeRoom].tasks[activeFreq].push(t(name));
+  newTaskInput.value = '';
+  save();
+  render();
+  newTaskInput.focus();
+}
+document.getElementById('addTaskBtn').addEventListener('click', addTask);
+newTaskInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') addTask(); });
+
+// Date label
+dateLabelEl.textContent = new Date().toLocaleDateString('en-US', {
+  weekday: 'long', month: 'long', day: 'numeric'
+});
+
+// Refresh when the tab becomes visible again (picks up resets)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) render();
+});
+
+render();
+</script>
+</body>
+</html>
